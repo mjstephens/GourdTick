@@ -9,11 +9,6 @@ namespace GalaxyGourd.Tick
     public static class Ticker
     {
         #region VARIABLES
-
-        // Default tick groups
-        public const string TickDefaultUpdate = "DefaultUpdate";
-        public const string TickDefaultFixedUpdate = "DefaultFixedUpdate";
-        public const string TickDefaultLateUpdate = "DefaultLateUpdate";
         
         // Updates
         private static TickCollection _collectionUpdate;
@@ -28,25 +23,17 @@ namespace GalaxyGourd.Tick
 
 
         #region LOAD
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void OnSubsystemRegistration()
-        {
-            ClearAllTickables();
-            
-            // Compile tick groups from project settings
-            TickGroups.CompileTickGroups();
-            
-            // Fallback, load default groups
-            if (_collectionUpdate == null)
-            {
-                ReceiveCoreTickGroups(null, null, null);
-            }
-        }
         
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void OnAfterSceneLoad()
         {
+            // Fallback, load default groups
+            if (_collectionUpdate == null)
+            {
+                ClearAllTickables();
+                ReceiveTickGroups(null, null, null, null);
+            }
+            
             // Create the object that will call the Unity Update functions for us
             GameObject tickSource = new GameObject("[TickSource]");
             tickSource.AddComponent<TickSource>();
@@ -149,25 +136,31 @@ namespace GalaxyGourd.Tick
 
         #region UTILITY
 
-        internal static void ReceiveCoreTickGroups(
+        internal static void ReceiveTickGroups(
             string[] orderedUpdateGroups,
             string[] orderedFixedUpdateGroups,
-            string[] orderedLateUpdateGroups)
+            string[] orderedLateUpdateGroups,
+            DataTimedTickGroup[] timedGroups)
         {
-            string[] updateGroups = orderedUpdateGroups ?? new[] { TickDefaultUpdate };
+            // 
+            ClearAllTickables();
+            
+            //
+            string[] updateGroups = orderedUpdateGroups ?? new[] { TickSettings.TickDefaultUpdate };
             _collectionUpdate = new TickCollection(updateGroups);
-            string[] fixedUpdateGroups = orderedFixedUpdateGroups ?? new[] { TickDefaultFixedUpdate };
+            string[] fixedUpdateGroups = orderedFixedUpdateGroups ?? new[] { TickSettings.TickDefaultFixedUpdate };
             _collectionFixedUpdate = new TickCollection(fixedUpdateGroups);
-            string[] lateUpdateGroups = orderedLateUpdateGroups ?? new[] { TickDefaultLateUpdate };
+            string[] lateUpdateGroups = orderedLateUpdateGroups ?? new[] { TickSettings.TickDefaultLateUpdate };
             _collectionLateUpdate = new TickCollection(lateUpdateGroups);
-        }
-
-        internal static void ReceiveTimedTickGroups(DataTimedTickGroup[] groups)
-        {
-            _collectionsTimed = new TickTimed[groups.Length];
-            for (int i = 0; i < groups.Length; i++)
+            
+            if (timedGroups == null)
+                return;
+            
+            //
+            _collectionsTimed = new TickTimed[timedGroups.Length];
+            for (int i = 0; i < timedGroups.Length; i++)
             {
-                _collectionsTimed[i] = new TickTimed(groups[i].OrderedGroups, groups[i].Interval);
+                _collectionsTimed[i] = new TickTimed(timedGroups[i].OrderedGroups, timedGroups[i].Interval);
             }
         }
 
