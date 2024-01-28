@@ -7,5 +7,12 @@
   "author": {
     "name": "Michael Stephens",
     "email": "mstephens.dev@gmail.com"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Example TickSettings",
+      "description": "Demonstrates basic setup for defining ordered sets of project tick groups.",
+      "path": "Samples~/TickSettings"
+    }
+  ]
 }
