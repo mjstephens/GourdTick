@@ -9,7 +9,7 @@ namespace GalaxyGourd.Tick
     {
         #region PROPERTIES
 
-        int TickGroup { get; }
+        string TickGroup { get; }
 
         #endregion PROPERTIES
 

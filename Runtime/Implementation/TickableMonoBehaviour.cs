@@ -11,7 +11,7 @@ namespace GalaxyGourd.Tick
     {
         #region VARIABLES
 
-        public abstract int TickGroup { get; }
+        public abstract string TickGroup { get; }
 
         #endregion VARIABLES
 

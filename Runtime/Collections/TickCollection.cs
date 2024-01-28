@@ -6,18 +6,18 @@ namespace GalaxyGourd.Tick
     {
         #region VARIABLES
         
-        internal readonly List<Dictionary<int, List<ITickable>>> Tickables = new();
+        internal readonly List<Dictionary<string, List<ITickable>>> Tickables = new();
 
         #endregion VARIABLES
 
 
         #region INITIALIZATION
 
-        internal TickCollection(IEnumerable<int> orderedGroups)
+        internal TickCollection(IEnumerable<string> orderedGroups)
         {
-            foreach (int group in orderedGroups)
+            foreach (string group in orderedGroups)
             {
-                Tickables.Add(new Dictionary<int, List<ITickable>>
+                Tickables.Add(new Dictionary<string, List<ITickable>>
                 {
                     { group, new() }
                 });
@@ -31,9 +31,9 @@ namespace GalaxyGourd.Tick
 
         internal void Tick(float delta)
         {
-            foreach (Dictionary<int, List<ITickable>> group in Tickables)
+            foreach (Dictionary<string, List<ITickable>> group in Tickables)
             {
-                foreach (KeyValuePair<int, List<ITickable>> pair in group)
+                foreach (KeyValuePair<string, List<ITickable>> pair in group)
                 {
                     foreach (ITickable tickable in pair.Value)
                     {

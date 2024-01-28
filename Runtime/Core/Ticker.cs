@@ -10,28 +10,16 @@ namespace GalaxyGourd.Tick
     {
         #region VARIABLES
 
+        // Default tick groups
+        public const string TickDefaultUpdate = "DefaultUpdate";
+        public const string TickDefaultFixedUpdate = "DefaultFixedUpdate";
+        public const string TickDefaultLateUpdate = "DefaultLateUpdate";
+        
         // Updates
         private static TickCollection _collectionUpdate;
         private static TickCollection _collectionFixedUpdate;
         private static TickCollection _collectionLateUpdate;
-        
-        // Alternate updates - A is ticked, then B the next update, etc
-        private static TickCollection _collectionAltUpdateA;
-        private static TickCollection _collectionAltUpdateB;
-        private static bool _altFlagUpdate;
-        private static TickCollection _collectionAltFixedUpdateA;
-        private static TickCollection _collectionAltFixedUpdateB;
-        private static bool _altFlagFixedUpdate;
-        private static TickCollection _collectionAltLateUpdateA;
-        private static TickCollection _collectionAltLateUpdateB;
-        private static bool _altFlagLateUpdate;
-
-        // Timed
-        private static TickTimed _collectionTenthSecond;
-        private static TickTimed _collectionHalfSecond;
-        private static TickTimed _collectionFullSecond;
-        private static TickTimed _collectionTwoSeconds;
-        private static TickTimed _collectionFiveSeconds;
+        private static TickTimed[] _collectionsTimed;
 
         private static readonly List<ITickable> _queueAdd = new();
         private static readonly List<ITickable> _queueRemove = new();
@@ -45,12 +33,21 @@ namespace GalaxyGourd.Tick
         private static void OnSubsystemRegistration()
         {
             ClearAllTickables();
-            ConstructTickCollections(Resources.Load<DataConfigTickCollections>("DAT_TickCollections"));
+            
+            // Compile tick groups from project settings
+            TickGroups.CompileTickGroups();
+            
+            // Fallback, load default groups
+            if (_collectionUpdate == null)
+            {
+                ReceiveCoreTickGroups(null, null, null);
+            }
         }
         
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void OnAfterSceneLoad()
         {
+            // Create the object that will call the Unity Update functions for us
             GameObject tickSource = new GameObject("[TickSource]");
             tickSource.AddComponent<TickSource>();
         }
@@ -122,66 +119,28 @@ namespace GalaxyGourd.Tick
         internal static void TickUpdate(float delta)
         {
             _collectionUpdate.Tick(delta);
-
-            if (_altFlagUpdate)
-                _collectionAltUpdateA.Tick(delta);
-            else
-                _collectionAltUpdateB.Tick(delta);
-
-            _altFlagUpdate = !_altFlagUpdate;
             CheckCustomTicks(delta);
         }
         
         internal static void TickFixedUpdate(float delta)
         {
             _collectionFixedUpdate.Tick(delta);
-
-            if (_altFlagFixedUpdate)
-                _collectionAltFixedUpdateA.Tick(delta);
-            else
-                _collectionAltFixedUpdateB.Tick(delta);
-            
-            _altFlagFixedUpdate = !_altFlagFixedUpdate;
         }
         
         internal static void TickLateUpdate(float delta)
         {
             _collectionLateUpdate.Tick(delta);
-
-            if (_altFlagLateUpdate)
-                _collectionAltLateUpdateA.Tick(delta);
-            else
-                _collectionAltLateUpdateB.Tick(delta);
-
-            _altFlagLateUpdate = !_altFlagLateUpdate;
             FlushQueued();
         }
 
         private static void CheckCustomTicks(float delta)
         {
-            if (_collectionTenthSecond.TickHasElapsed(0.1f, delta))
+            foreach (TickTimed timedGroup in _collectionsTimed)
             {
-                _collectionTenthSecond.Tick(delta);
-            }
-            
-            if (_collectionHalfSecond.TickHasElapsed(0.5f, delta))
-            {
-                _collectionHalfSecond.Tick(delta);
-            }
-            
-            if (_collectionFullSecond.TickHasElapsed(1f, delta))
-            {
-                _collectionFullSecond.Tick(delta);
-            }
-            
-            if (_collectionTwoSeconds.TickHasElapsed(2f, delta))
-            {
-                _collectionTwoSeconds.Tick(delta);
-            }
-            
-            if (_collectionFiveSeconds.TickHasElapsed(5f, delta))
-            {
-                _collectionFiveSeconds.Tick(delta);
+                if (timedGroup.TickHasElapsed(delta))
+                {
+                    timedGroup.Tick(delta);
+                }
             }
         }
 
@@ -190,56 +149,44 @@ namespace GalaxyGourd.Tick
 
         #region UTILITY
 
-        private static void ConstructTickCollections(DataConfigTickCollections data)
+        internal static void ReceiveCoreTickGroups(
+            string[] orderedUpdateGroups,
+            string[] orderedFixedUpdateGroups,
+            string[] orderedLateUpdateGroups)
         {
-            _collectionUpdate = new TickCollection(data.GetUpdateGroups());
-            _collectionFixedUpdate = new TickCollection(data.GetFixedUpdateGroups());
-            _collectionLateUpdate = new TickCollection(data.GetLateUpdateGroups());
-            
-            _collectionAltUpdateA = new TickCollection(data.GetAltUpdateAGroups());
-            _collectionAltUpdateB = new TickCollection(data.GetAltUpdateBGroups());
-            _collectionAltFixedUpdateA = new TickCollection(data.GetAltFixedUpdateAGroups());
-            _collectionAltFixedUpdateB = new TickCollection(data.GetAltFixedUpdateBGroups());
-            _collectionAltLateUpdateA = new TickCollection(data.GetAltLateUpdateAGroups());
-            _collectionAltLateUpdateB = new TickCollection(data.GetAltLateUpdateBGroups());
-            
-            _collectionTenthSecond = new TickTimed(data.GetTimedUpdate100MSGroups());
-            _collectionHalfSecond = new TickTimed(data.GetTimedUpdate500MSGroups());
-            _collectionFullSecond = new TickTimed(data.GetTimedUpdate1SGroups());
-            _collectionTwoSeconds = new TickTimed(data.GetTimedUpdate2SGroups());
-            _collectionFiveSeconds = new TickTimed(data.GetTimedUpdate5SGroups());
+            string[] updateGroups = orderedUpdateGroups ?? new[] { TickDefaultUpdate };
+            _collectionUpdate = new TickCollection(updateGroups);
+            string[] fixedUpdateGroups = orderedFixedUpdateGroups ?? new[] { TickDefaultFixedUpdate };
+            _collectionFixedUpdate = new TickCollection(fixedUpdateGroups);
+            string[] lateUpdateGroups = orderedLateUpdateGroups ?? new[] { TickDefaultLateUpdate };
+            _collectionLateUpdate = new TickCollection(lateUpdateGroups);
         }
 
-        private static List<ITickable> GetTickGroupList(int key)
+        internal static void ReceiveTimedTickGroups(DataTimedTickGroup[] groups)
         {
-            foreach (Dictionary<int, List<ITickable>> group in _collectionUpdate.Tickables)
+            _collectionsTimed = new TickTimed[groups.Length];
+            for (int i = 0; i < groups.Length; i++)
+            {
+                _collectionsTimed[i] = new TickTimed(groups[i].OrderedGroups, groups[i].Interval);
+            }
+        }
+
+        private static List<ITickable> GetTickGroupList(string key)
+        {
+            // Check core groups
+            foreach (Dictionary<string, List<ITickable>> group in _collectionUpdate.Tickables)
                 if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionFixedUpdate.Tickables)
+            foreach (Dictionary<string, List<ITickable>> group in _collectionFixedUpdate.Tickables)
                 if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionLateUpdate.Tickables)
+            foreach (Dictionary<string, List<ITickable>> group in _collectionLateUpdate.Tickables)
                 if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltUpdateA.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltUpdateB.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltFixedUpdateA.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltFixedUpdateB.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltLateUpdateA.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionAltLateUpdateB.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionTenthSecond.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionHalfSecond.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionTenthSecond.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionTwoSeconds.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<int, List<ITickable>> group in _collectionFiveSeconds.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
+            
+            // Check timed groups
+            foreach (TickTimed timed in _collectionsTimed)
+            {
+                foreach (Dictionary<string, List<ITickable>> group in timed.Tickables)
+                    if (group.TryGetValue(key, out var list)) return list;
+            }
 
             return null;
         }
@@ -248,6 +195,10 @@ namespace GalaxyGourd.Tick
         {
             _queueAdd.Clear();
             _queueRemove.Clear();
+
+            _collectionUpdate = null;
+            _collectionFixedUpdate = null;
+            _collectionLateUpdate = null;
         }
 
         #endregion UTILITY
