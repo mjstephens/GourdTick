@@ -7,7 +7,7 @@ namespace GalaxyGourd.Tick
     /// Basic MonoBehaviour tickable implementation, eliminates boilerplate for simple tickables.
     /// Use this as a base class if you don't require any advanced or custom implementation.
     /// </summary>
-    public abstract class TickableMonoBehaviour : MonoBehaviour, ITickable
+    public abstract class TickableBehaviour : MonoBehaviour, ITickable
     {
         #region VARIABLES
 

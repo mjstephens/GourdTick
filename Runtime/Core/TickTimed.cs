@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace GalaxyGourd.Tick
 {
     internal class TickTimed : TickCollection
@@ -12,7 +14,7 @@ namespace GalaxyGourd.Tick
 
         #region CONSTRUCTION
 
-        internal TickTimed(string[] orderedGroups, float interval) : base(orderedGroups)
+        internal TickTimed(IReadOnlyList<string> orderedGroups, float interval) : base(orderedGroups)
         {
             _interval = interval;
         }
@@ -21,12 +23,6 @@ namespace GalaxyGourd.Tick
 
 
         #region API
-
-        internal void Reset()
-        {
-            Tickables.Clear();
-            _elapsedSincePreviousUpdate = 0;
-        }
 
         internal bool TickHasElapsed(float delta)
         {

@@ -1,7 +1,7 @@
 {
   "name": "com.galaxygourd.tick",
   "version": "1.0.0",
-  "displayName": "Tick",
+  "displayName": "GourdTick",
   "description": "Customizable ticking framework for Unity projects.",
   "unity": "2019.4",
   "author": {
@@ -10,9 +10,9 @@
   },
   "samples": [
     {
-      "displayName": "Example TickSettings",
-      "description": "Demonstrates basic setup for defining ordered sets of project tick groups.",
-      "path": "Samples~/TickSettings"
+      "displayName": "Example Implementation",
+      "description": "Demonstrates 1) Example implementation of tickable classes, and 2) Setup for defining ordered sets of custom tick groups.",
+      "path": "Samples~/Implementation"
     }
   ]
 }

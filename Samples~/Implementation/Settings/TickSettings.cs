@@ -2,10 +2,21 @@ using UnityEngine;
 
 namespace GalaxyGourd.Tick
 {
+    /// <summary>
+    /// We implement a partial version of TickSettings to introduce custom tick groups and timed ticks. See below for
+    /// implementation examples.
+    /// </summary>
     public static partial class TickSettings
     {
         #region TICKS
 
+        /*
+         *  Here we define a number of custom tick categories for systems in our project. Our ITickable instances will
+         *  reference these.
+         * 
+         *  Technically you don't need to use const values - ITickables could specify string literals. But defining const
+         *  values ensures typos don't happen.
+         */
         public const string TickVisioncast = "TickVisioncast";
         public const string TickRaycast = "TickRaycast";
         public const string TickDebug = "TickDebug";

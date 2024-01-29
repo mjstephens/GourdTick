@@ -142,10 +142,10 @@ namespace GalaxyGourd.Tick
             string[] orderedLateUpdateGroups,
             DataTimedTickGroup[] timedGroups)
         {
-            // 
+            // Make sure we've cleared out from any previous runs
             ClearAllTickables();
             
-            //
+            // Default update groups
             string[] updateGroups = orderedUpdateGroups ?? new[] { TickSettings.TickDefaultUpdate };
             _collectionUpdate = new TickCollection(updateGroups);
             string[] fixedUpdateGroups = orderedFixedUpdateGroups ?? new[] { TickSettings.TickDefaultFixedUpdate };
@@ -156,7 +156,7 @@ namespace GalaxyGourd.Tick
             if (timedGroups == null)
                 return;
             
-            //
+            // Add any custom groups
             _collectionsTimed = new TickTimed[timedGroups.Length];
             for (int i = 0; i < timedGroups.Length; i++)
             {
@@ -167,18 +167,18 @@ namespace GalaxyGourd.Tick
         private static List<ITickable> GetTickGroupList(string key)
         {
             // Check core groups
-            foreach (Dictionary<string, List<ITickable>> group in _collectionUpdate.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<string, List<ITickable>> group in _collectionFixedUpdate.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
-            foreach (Dictionary<string, List<ITickable>> group in _collectionLateUpdate.Tickables)
-                if (group.TryGetValue(key, out var list)) return list;
+            if (_collectionUpdate.CollectionContainsKey(key))
+                return _collectionUpdate.GetListForKey();
+            if (_collectionFixedUpdate.CollectionContainsKey(key))
+                return _collectionFixedUpdate.GetListForKey();
+            if (_collectionLateUpdate.CollectionContainsKey(key))
+                return _collectionLateUpdate.GetListForKey();
             
             // Check timed groups
             foreach (TickTimed timed in _collectionsTimed)
             {
-                foreach (Dictionary<string, List<ITickable>> group in timed.Tickables)
-                    if (group.TryGetValue(key, out var list)) return list;
+                if (timed.CollectionContainsKey(key))
+                    return timed.GetListForKey();
             }
 
             return null;
@@ -192,6 +192,7 @@ namespace GalaxyGourd.Tick
             _collectionUpdate = null;
             _collectionFixedUpdate = null;
             _collectionLateUpdate = null;
+            _collectionsTimed = null;
         }
 
         #endregion UTILITY
