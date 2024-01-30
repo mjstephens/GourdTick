@@ -122,6 +122,9 @@ namespace GalaxyGourd.Tick
 
         private static void CheckCustomTicks(float delta)
         {
+            if (_collectionsTimed == null)
+                return;
+            
             foreach (TickTimed timedGroup in _collectionsTimed)
             {
                 if (timedGroup.TickHasElapsed(delta))
